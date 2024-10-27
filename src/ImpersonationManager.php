@@ -22,7 +22,7 @@ class ImpersonationManager
 {
     public const SESSION_KEY = 'impersonation_data';
 
-    protected static ?Closure $authorisation = null;
+    protected static ?Closure $authorization = null;
 
     protected LoggerInterface $logger;
 
@@ -72,16 +72,16 @@ class ImpersonationManager
             return false;
         }
 
-        if (static::$authorisation === null) {
+        if (static::$authorization === null) {
             throw MissingAuthorisationCallbackException::make();
         }
 
-        return (static::$authorisation)($admin, $user);
+        return (static::$authorization)($admin, $user);
     }
 
-    public static function authoriseUsing(Closure $callback): void
+    public static function authorizeUsing(Closure $callback): void
     {
-        static::$authorisation = $callback;
+        static::$authorization = $callback;
     }
 
     public function level(): int
