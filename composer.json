@@ -1,0 +1,48 @@
+{
+    "name": "bradietilley/laravel-impersonation",
+    "description": "Laravel impersonation management",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "BradieTilley\\Impersonation\\": "src/",
+            "BradieTilley\\Impersonation\\Database\\Factories\\": "database/factories"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Hatchet",
+            "homepage": "https://github.com/bradietilley"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "laravel/framework": "^11.0",
+        "spatie/laravel-package-tools": "^1.16"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "pestphp/pest": "^2.0",
+        "phpstan/phpstan": "^1.8",
+        "orchestra/testbench": "^9.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BradieTilley\\Impersonation\\ImpersonationServiceProvider"
+            ]
+        }
+    }
+}
