@@ -21,30 +21,45 @@ composer require bradietilley/laravel-impersonation
 
 ## Documentation
 
-Check if the authorised user can impersonate
+The `BradieTilley\Impersonation\ImpersonationManager` singleton can be swapped out for your own.
+
+Usage of this is fairly straight-forward, it can be depedency injected or statically called.
+
+**Check if the authorised user can impersonate**
 
 ```php
 ImpersonationManager::make()->canImpersonate($user);
 ```
 
-Begin impersonating a given user
+**Begin impersonating a given user**
 
 ```php
 ImpersonationManager::make()->impersonate($user);
 ```
 
-Check if the authorised user is currently impersonating
+**Check if the authorised user is currently impersonating**
 
 ```php
 ImpersonationManager::make()->isImpersonating();
 ```
 
-Stop impersonating
+**Stop impersonating**
 
 ```php
 ImpersonationManager::make()->stopImpersonating();
 ```
 
+**Authorising who can impersonate**
+
+In your service provider you should specify a callback to control who can impersonate.
+
+```php
+ImpersonationManager::authorizeUsing(function (User $admin, User $user) {
+    return $admin->isAdmin() && ! $user->isAdmin();
+});
+```
+
+This callback will be invoked as part of the `ImpersonationManager::make()->canImpersonate($user);` check, and will ultimately serve as a simple gate check for who can impersonate who.
 
 ## Author
 
