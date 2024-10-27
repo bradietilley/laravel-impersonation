@@ -8,7 +8,7 @@ use Closure;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Symfony\Component\HttpFoundation\Response;
 
-class ImpersonationFinish
+class ImpersonationStopController
 {
     protected static ?Closure $callback = null;
 

@@ -2,8 +2,10 @@
 
 namespace BradieTilley\Impersonation\Http\Requests;
 
+use BradieTilley\Impersonation\Contracts\Impersonateable;
+use BradieTilley\Impersonation\ImpersonationConfig;
 use BradieTilley\Impersonation\ImpersonationManager;
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ImpersonationStartRequest extends FormRequest
@@ -13,17 +15,32 @@ class ImpersonationStartRequest extends FormRequest
         return ImpersonationManager::make()->canImpersonate($this->user(), $this->impersonatee());
     }
 
-    public function impersonatee(): User
+    public function rules(): array
     {
-        /** @var User $user */
-        $user = $this->route('user');
+        return [
+            'impersonatee' => [
+                'required',
+                'alpha',
+            ],
+        ];
+    }
+
+    public function impersonatee(): Model&Impersonateable
+    {
+        $model = ImpersonationConfig::getRoutingImpersonateeModel();
+
+        /** @var string|int $user */
+        $user = $this->input('user');
+
+        if (is_string($user) || is_int($user)) {
+        }
 
         return $user;
     }
 
-    public function user($guard = null): User
+    public function user($guard = null): Model&Impersonateable
     {
-        /** @var User $user */
+        /** @var Model&Impersonateable $user */
         $user = parent::user($guard);
 
         return $user;

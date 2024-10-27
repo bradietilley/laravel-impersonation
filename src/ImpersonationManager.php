@@ -45,7 +45,7 @@ class ImpersonationManager
     /**
      * Set the handler for authorizing who can impersonate who
      *
-     * @param (Closure(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool)
+     * @param (Closure(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool) $callback
      */
     public static function authorizeUsing(Closure $callback): void
     {
@@ -69,7 +69,7 @@ class ImpersonationManager
     /**
      * Set the handler for resolving the authorised user.
      *
-     * @param (Closure(): Model&Impersonateable) $callback
+     * @param (Closure(): (Model&Impersonateable)) $callback
      */
     public static function resolveUser(Closure $callback): void
     {
@@ -91,7 +91,7 @@ class ImpersonationManager
     /**
      * Set the handler for logging in as a user.
      *
-     * @param (Closure(Model&Impersonateable $user)) $callback
+     * @param (Closure(Model&Impersonateable $user): void) $callback
      */
     public static function loginUsing(Closure $callback): void
     {

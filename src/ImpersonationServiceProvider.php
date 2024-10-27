@@ -10,7 +10,8 @@ class ImpersonationServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package->name('impersonation')
-            ->hasConfigFile('impersonation');
+            ->hasConfigFile('impersonation')
+            ->hasRoute('web');
     }
 
     public function packageRegistered(): void
