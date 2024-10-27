@@ -17,23 +17,15 @@ class ImpersonationConfig
         static::$cache = [];
     }
 
-    public static function getLogChannel(): string|null
-    {
-        return static::get('channel');
-    }
-
-    public static function getGateKey(): string
-    {
-        return static::get('gate_key');
-    }
-
-    public static function getAuthGuard(): string|null
-    {
-        return static::get('auth_guard');
-    }
-
+    /**
+     * Get the maximum times a user can impersonate.
+     *
+     * 1 = A single impersonation: Foo impersonating Bar
+     * 2 = A double impersonation: Foo impersonating Bar impersonating Baz
+     * ...
+     */
     public static function maxDepth(): int
     {
-        return static::get('max_depth', 2);
+        return static::get('max_depth', 1);
     }
 }

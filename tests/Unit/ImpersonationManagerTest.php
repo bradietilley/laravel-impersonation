@@ -18,6 +18,11 @@ beforeEach(function () {
 test('ImpersonationManager can impersonate another user until limit reached', function () {
     Event::fake();
 
+    config([
+        'impersonation.max_depth' => 3,
+    ]);
+    ImpersonationConfig::clearCache();
+
     $admin0 = create_a_user();
     $admin1 = create_a_user();
     $admin2 = create_a_user();

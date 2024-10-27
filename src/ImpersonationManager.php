@@ -10,15 +10,10 @@ use BradieTilley\Impersonation\Exceptions\MissingAuthorizationCallbackException;
 use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Closure;
-use Illuminate\Auth\AuthManager;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
-use Illuminate\Http\Request;
-use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Auth;
-use Psr\Log\LoggerInterface;
 
 class ImpersonationManager
 {
@@ -30,21 +25,11 @@ class ImpersonationManager
 
     protected static ?Closure $login = null;
 
-    protected LoggerInterface $logger;
-
-    protected Guard $guard;
-
     /** @var array<int, Impersonation> */
     protected array $impersonations = [];
 
-    public function __construct(
-        protected Session $session,
-        protected Request $request,
-        protected AuthManager $auth,
-        LogManager $log,
-    ) {
-        $this->logger = $log->channel(ImpersonationConfig::getLogChannel());
-
+    public function __construct(protected Session $session)
+    {
         /** @phpstan-ignore-next-line */
         $this->impersonations = $this->session->get(static::SESSION_KEY, []);
     }
