@@ -10,9 +10,7 @@ use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Auth\AuthManager;
-use Illuminate\Auth\RequestGuard;
 use Illuminate\Auth\SessionGuard;
-use Illuminate\Auth\TokenGuard;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Foundation\Auth\User;
@@ -55,7 +53,6 @@ class ImpersonationManager
 
     protected function guard(): Guard
     {
-        /** @phpstan-ignore-next-line */
         return $this->auth->guard(ImpersonationConfig::getAuthGuard());
     }
 
@@ -138,7 +135,7 @@ class ImpersonationManager
     {
         $guard = $this->guard();
 
-        if ($guard instanceof SessionGuard || $guard instanceof RequestGuard || $guard instanceof TokenGuard) {
+        if ($guard instanceof SessionGuard) {
             $guard->login($user, true);
         } else {
             $guard->setUser($user);

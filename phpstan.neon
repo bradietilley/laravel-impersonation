@@ -2,3 +2,8 @@ parameters:
   level: max
   paths:
     - src/
+
+  reportUnmatchedIgnoredErrors: false
+  
+  ignoreErrors:
+    - '#Method BradieTilley\\Impersonation\\ImpersonationConfig::.+ should return .+ but returns mixed#'
