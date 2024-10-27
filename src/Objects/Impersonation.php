@@ -2,8 +2,9 @@
 
 namespace BradieTilley\Impersonation\Objects;
 
+use BradieTilley\Impersonation\Contracts\Impersonateable;
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
 
 class Impersonation
@@ -11,8 +12,8 @@ class Impersonation
     use SerializesModels;
 
     public function __construct(
-        public readonly User $admin,
-        public readonly User $user,
+        public readonly Model&Impersonateable $admin,
+        public readonly Model&Impersonateable $user,
         public readonly CarbonImmutable $timestamp,
         public readonly int $level,
     ) {

@@ -2,9 +2,10 @@
 
 namespace Workbench\App\Models;
 
+use BradieTilley\Impersonation\Contracts\Impersonateable;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
-class User extends AuthUser
+class User extends AuthUser implements Impersonateable
 {
     protected $guarded = [];
 

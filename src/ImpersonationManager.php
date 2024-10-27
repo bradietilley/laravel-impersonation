@@ -2,27 +2,33 @@
 
 namespace BradieTilley\Impersonation;
 
+use BradieTilley\Impersonation\Contracts\Impersonateable;
 use BradieTilley\Impersonation\Events\ImpersonationFinished;
 use BradieTilley\Impersonation\Events\ImpersonationStarted;
 use BradieTilley\Impersonation\Exceptions\CannotImpersonateUserException;
-use BradieTilley\Impersonation\Exceptions\MissingAuthorisationCallbackException;
+use BradieTilley\Impersonation\Exceptions\MissingAuthorizationCallbackException;
 use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Auth\AuthManager;
-use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Session\Session;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Request;
 use Illuminate\Log\LogManager;
+use Illuminate\Support\Facades\Auth;
 use Psr\Log\LoggerInterface;
 
 class ImpersonationManager
 {
     public const SESSION_KEY = 'impersonation_data';
 
-    protected static ?Closure $authorization = null;
+    protected static ?Closure $authorize = null;
+
+    protected static ?Closure $user = null;
+
+    protected static ?Closure $login = null;
 
     protected LoggerInterface $logger;
 
@@ -51,20 +57,89 @@ class ImpersonationManager
         return $instance;
     }
 
-    protected function guard(): Guard
+    /**
+     * Set the handler for authorizing who can impersonate who
+     *
+     * @param (Closure(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool)
+     */
+    public static function authorizeUsing(Closure $callback): void
     {
-        return $this->auth->guard(ImpersonationConfig::getAuthGuard());
+        static::$authorize = $callback;
     }
 
-    public function user(): User
+    /**
+     * Check if the given impersonator can impersonate the impersonatee
+     *
+     * @throws \BradieTilley\Impersonation\Exceptions\MissingAuthorizationCallbackException
+     */
+    protected function checkAuthorization(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool
     {
-        /** @phpstan-ignore-next-line */
-        return $this->guard()->user() ?? abort(403);
+        if (static::$authorize === null) {
+            throw MissingAuthorizationCallbackException::make();
+        }
+
+        return (static::$authorize)($impersonator, $impersonatee) === true;
     }
 
-    public function canImpersonate(User $admin, User $user): bool
+    /**
+     * Set the handler for resolving the authorised user.
+     *
+     * @param (Closure(): Model&Impersonateable) $callback
+     */
+    public static function resolveUser(Closure $callback): void
     {
-        if ($admin->is($user)) {
+        static::$user = $callback;
+    }
+
+    /**
+     * Get the authorised user.
+     */
+    public function user(): Model&Impersonateable
+    {
+        static::$user ??= fn () => Auth::user();
+
+        $user = (static::$user)();
+
+        return $user;
+    }
+
+    /**
+     * Set the handler for logging in as a user.
+     *
+     * @param (Closure(Model&Impersonateable $user)) $callback
+     */
+    public static function loginUsing(Closure $callback): void
+    {
+        static::$login = $callback;
+    }
+
+    /**
+     * Login as the given user.
+     */
+    protected function loginAs(Model&Impersonateable $user): static
+    {
+        static::$login ??= fn (User $user) => Auth::login($user);
+
+        (static::$login)($user);
+
+        return $this;
+    }
+
+    /**
+     * Get the current level of impersonate (how deeply impersonated
+     * are we?).
+     */
+    public function level(): int
+    {
+        return count($this->impersonations);
+    }
+
+    /**
+     * Check if the given impersonator can impersonate the impersonatee
+     */
+    public function canImpersonate(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool
+    {
+        if ($impersonator->is($impersonatee)) {
             return false;
         }
 
@@ -72,24 +147,10 @@ class ImpersonationManager
             return false;
         }
 
-        if (static::$authorization === null) {
-            throw MissingAuthorisationCallbackException::make();
-        }
-
-        return (static::$authorization)($admin, $user);
+        return $this->checkAuthorization($impersonator, $impersonatee);
     }
 
-    public static function authorizeUsing(Closure $callback): void
-    {
-        static::$authorization = $callback;
-    }
-
-    public function level(): int
-    {
-        return count($this->impersonations);
-    }
-
-    public function impersonate(User $user): static
+    public function impersonate(Model&Impersonateable $user): static
     {
         $admin = $this->user();
 
@@ -127,19 +188,6 @@ class ImpersonationManager
 
         $this->loginAs($impersonation->admin);
         $this->save();
-
-        return $this;
-    }
-
-    protected function loginAs(User $user): static
-    {
-        $guard = $this->guard();
-
-        if ($guard instanceof SessionGuard) {
-            $guard->login($user, true);
-        } else {
-            $guard->setUser($user);
-        }
 
         return $this;
     }
