@@ -54,9 +54,11 @@ ImpersonationManager::make()->stopImpersonating();
 In your service provider you should specify a callback to control who can impersonate.
 
 ```php
-ImpersonationManager::authorizeUsing(function (User $admin, User $user) {
-    return $admin->isAdmin() && ! $user->isAdmin();
-});
+ImpersonationManager::configure(
+    authorize: function (User $admin, User $user) {
+        return $admin->isAdmin() && ! $user->isAdmin();
+    },
+);
 ```
 
 This callback will be invoked as part of the `ImpersonationManager::make()->canImpersonate($user);` check, and will ultimately serve as a simple gate check for who can impersonate who.

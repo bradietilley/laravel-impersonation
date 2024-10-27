@@ -23,7 +23,7 @@ abstract class TestCase extends TestbenchTestCase
 
     public function getEnvironmentSetUp($app)
     {
-        $app['config']->set('impersonation.models.user', User::class);
+        $app['config']->set('impersonation.routing.impersonatee_model', User::class);
 
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [

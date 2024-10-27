@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Event;
 use Workbench\App\Models\User;
 
 beforeEach(function () {
-    ImpersonationManager::authorizeUsing(fn () => true);
+    ImpersonationManager::configure(fn () => true);
 });
 
 test('ImpersonationManager can impersonate another user until limit reached', function () {

@@ -8,7 +8,7 @@ class MissingAuthorizationCallbackException extends UnauthorizedHttpException
 {
     public static function make(): self
     {
-        $error = 'Missing impersonation callback: ImpersonationManager::authorizeUsing(fn () => ...)';
+        $error = 'Missing Impersonation Configuration: ImpersonationManager::configure(...)';
 
         return new self($error);
     }

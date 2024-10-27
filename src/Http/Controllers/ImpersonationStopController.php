@@ -2,16 +2,13 @@
 
 namespace BradieTilley\Impersonation\Http\Controllers;
 
-use BradieTilley\Impersonation\Http\Requests\ImpersonationFinishRequest;
+use BradieTilley\Impersonation\Http\Requests\ImpersonationStopRequest;
 use BradieTilley\Impersonation\ImpersonationManager;
-use Closure;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 class ImpersonationStopController
 {
-    protected static ?Closure $callback = null;
-
     public function __construct(
         public readonly ImpersonationManager $impersonation,
         public readonly ResponseFactory $response,
@@ -21,19 +18,10 @@ class ImpersonationStopController
     /**
      * Stop Impersonating
      */
-    public function __invoke(ImpersonationFinishRequest $request): Response
+    public function __invoke(ImpersonationStopRequest $request): Response
     {
         $this->impersonation->stopImpersonating();
 
-        return static::$callback
-            ? (static::$callback)($this)
-            : $this->response->json([
-                'success' => true,
-            ]);
-    }
-
-    public static function response(?Closure $callback): void
-    {
-        static::$callback = $callback;
+        return $this->impersonation->getStopResponse($request);
     }
 }
