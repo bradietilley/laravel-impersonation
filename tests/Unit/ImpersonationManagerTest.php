@@ -3,6 +3,7 @@
 use BradieTilley\Impersonation\Events\ImpersonationFinished;
 use BradieTilley\Impersonation\Events\ImpersonationStarted;
 use BradieTilley\Impersonation\Exceptions\CannotImpersonateUserException;
+use BradieTilley\Impersonation\ImpersonationConfig;
 use BradieTilley\Impersonation\ImpersonationManager;
 use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
@@ -166,6 +167,7 @@ test('ImpersonationManager will not allow impersonating beyond max depth', funct
     config([
         'impersonation.max_depth' => $max,
     ]);
+    ImpersonationConfig::clearCache();
 
     $manager = ImpersonationManager::make();
 

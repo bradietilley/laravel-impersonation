@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use BradieTilley\Impersonation\ImpersonationConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Orchestra\Testbench\Concerns\WithWorkbench;
@@ -16,6 +17,8 @@ abstract class TestCase extends TestbenchTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        ImpersonationConfig::clearCache();
     }
 
     public function getEnvironmentSetUp($app)
