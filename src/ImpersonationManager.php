@@ -12,7 +12,6 @@ use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Contracts\Session\Session;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -176,6 +175,8 @@ class ImpersonationManager
     /**
      * Configure the impersonation manager to work with the current project.
      *
+     * Any configuration callbacks omitted will be handled by default handlers.
+     *
      * @param (Closure(Impersonateable $impersonator, Impersonateable $impersonatee): bool) $authorize Callback to handle authorization logic
      * @param (Closure(): (Impersonateable|null))|null $user Callback to resolve the current authorised user at any given point
      * @param (Closure(Impersonateable $impersonatee): void)|null $login Callback to handle to the login logic
@@ -191,54 +192,13 @@ class ImpersonationManager
         Closure|null $startResponse = null,
         Closure|null $stopResponse = null,
     ): void {
-        $user ??= function () {
-            $user = Auth::user();
-
-            if (! $user instanceof Model) {
-                return null;
-            }
-
-            if (! $user instanceof Impersonateable) {
-                return null;
-            }
-
-            return $user;
-        };
-
-        $login ??= function (Impersonateable $user) {
-            /** @var User $user */
-            Auth::login($user, Auth::viaRemember());
-        };
-
-        $resolveImpersonatee ??= function (string $impersonatee) {
-            $model = ImpersonationConfig::getRoutingImpersonateeModel();
-
-            return $model::findOrFail($impersonatee);
-        };
-
-        $startResponse ??= function (ImpersonationStartRequest $request) {
-            return $request->expectsJson()
-                ? response()->json([
-                    'success' => true,
-                ])
-                : redirect()->back();
-        };
-
-        $stopResponse ??= function (ImpersonationStopRequest $request) {
-            return $request->expectsJson()
-                ? response()->json([
-                    'success' => true,
-                ])
-                : redirect()->back();
-        };
-
         static::make()->setConfiguration(
             $authorize,
-            $user,
-            $login,
-            $resolveImpersonatee,
-            $startResponse,
-            $stopResponse,
+            $user ??= static::defaultUserHandler(...),
+            $login ??= static::defaultLoginHandler(...),
+            $resolveImpersonatee ??= static::defaultResolveImpersonateeHandler(...),
+            $startResponse ??= static::defaultStartResponseHandler(...),
+            $stopResponse ??= static::defaultStopResponseHandler(...),
         );
     }
 
@@ -281,5 +241,72 @@ class ImpersonationManager
         if ($stopResponse) {
             $this->stopResponse = $stopResponse;
         }
+    }
+
+    /**
+     * The default handler for identifying the current logged in user.
+     *
+     * By default this is a simple `Auth::user()` call
+     */
+    public static function defaultUserHandler(): ?Impersonateable
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof Impersonateable) {
+            return null;
+        }
+
+        return $user;
+    }
+
+    /**
+     * The default handler for logging in as an impersonateable.
+     *
+     * By default this is a simple `Auth::login()` call
+     */
+    public static function defaultLoginHandler(Impersonateable $user): void
+    {
+        /** @var User $user */
+        Auth::login($user, Auth::viaRemember());
+    }
+
+    /**
+     * The default handler for resolving the impersonatee by the given identifier string (ID, etc).
+     *
+     * By default this is a simple `<ImpersonateeModel>::findOrFail()` call
+     */
+    public static function defaultResolveImpersonateeHandler(string $impersonatee): Impersonateable
+    {
+        $model = ImpersonationConfig::getRoutingImpersonateeModel();
+
+        return $model::findOrFail($impersonatee);
+    }
+
+    /**
+     * The default handler for producing the Response after starting impersonation via the API.
+     *
+     * By default this is a simple JSON response or direct back.
+     */
+    public static function defaultStartResponseHandler(ImpersonationStartRequest $request): Response
+    {
+        return $request->expectsJson()
+            ? response()->json([
+                'success' => true,
+            ])
+            : redirect()->back();
+    }
+
+    /**
+     * The default handler for producing the Response after stopping impersonation via the API.
+     *
+     * By default this is a simple JSON response or direct back.
+     */
+    public static function defaultStopResponseHandler(ImpersonationStopRequest $request): Response
+    {
+        return $request->expectsJson()
+            ? response()->json([
+                'success' => true,
+            ])
+            : redirect()->back();
     }
 }
