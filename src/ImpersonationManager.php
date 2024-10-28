@@ -5,6 +5,7 @@ namespace BradieTilley\Impersonation;
 use BradieTilley\Impersonation\Contracts\Impersonateable;
 use BradieTilley\Impersonation\Events\ImpersonationFinished;
 use BradieTilley\Impersonation\Events\ImpersonationStarted;
+use BradieTilley\Impersonation\Events\ImpersonationStarting;
 use BradieTilley\Impersonation\Exceptions\ImpersonationException;
 use BradieTilley\Impersonation\Http\Requests\ImpersonationStartRequest;
 use BradieTilley\Impersonation\Http\Requests\ImpersonationStopRequest;
@@ -80,12 +81,20 @@ class ImpersonationManager
     }
 
     /**
-     * Get the current level of impersonate (how deeply impersonated
+     * Get the current level of impersonation (how deeply impersonated
      * are we?).
      */
     public function level(): int
     {
         return count($this->impersonations);
+    }
+
+    /**
+     * Get the current level of impersonation as an Impersonation DTO
+     */
+    public function getCurrentImpersonation(): ?Impersonation
+    {
+        return $this->impersonations ? $this->impersonations[array_key_last($this->impersonations)] : null;
     }
 
     /**
@@ -120,6 +129,8 @@ class ImpersonationManager
         $level = $this->level() + 1;
         $level = Impersonation::make($admin, $user, $now, $level);
 
+        ImpersonationStarting::dispatch($level);
+
         $this->impersonations[] = $level;
         $this->loginAs($user);
         $this->save();
@@ -144,7 +155,7 @@ class ImpersonationManager
 
         ImpersonationFinished::dispatch($impersonation);
 
-        $this->loginAs($impersonation->admin);
+        $this->loginAs($impersonation->impersonator);
         $this->save();
 
         return $this;

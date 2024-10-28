@@ -42,8 +42,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(1);
 
     Event::assertDispatched(function (ImpersonationStarted $event) use ($admin0, $admin1) {
-        expect($event->impersonation->admin->is($admin0))->toBeTrue();
-        expect($event->impersonation->user->is($admin1))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin0))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin1))->toBeTrue();
         expect($event->impersonation->level)->toBe(1);
 
         return true;
@@ -56,8 +56,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(2);
 
     Event::assertDispatched(function (ImpersonationStarted $event) use ($admin1, $admin2) {
-        expect($event->impersonation->admin->is($admin1))->toBeTrue();
-        expect($event->impersonation->user->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin1))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin2))->toBeTrue();
         expect($event->impersonation->level)->toBe(2);
 
         return true;
@@ -70,8 +70,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(3);
 
     Event::assertDispatched(function (ImpersonationStarted $event) use ($admin2, $admin3) {
-        expect($event->impersonation->admin->is($admin2))->toBeTrue();
-        expect($event->impersonation->user->is($admin3))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin3))->toBeTrue();
         expect($event->impersonation->level)->toBe(3);
 
         return true;
@@ -87,8 +87,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(2);
 
     Event::assertDispatched(function (ImpersonationFinished $event) use ($admin2, $admin3) {
-        expect($event->impersonation->admin->is($admin2))->toBeTrue();
-        expect($event->impersonation->user->is($admin3))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin3))->toBeTrue();
         expect($event->impersonation->level)->toBe(3);
 
         return true;
@@ -101,8 +101,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(3);
 
     Event::assertDispatched(function (ImpersonationStarted $event) use ($admin2, $admin4) {
-        expect($event->impersonation->admin->is($admin2))->toBeTrue();
-        expect($event->impersonation->user->is($admin4))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin4))->toBeTrue();
         expect($event->impersonation->level)->toBe(3);
 
         return true;
@@ -115,8 +115,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(2);
 
     Event::assertDispatched(function (ImpersonationFinished $event) use ($admin2, $admin4) {
-        expect($event->impersonation->admin->is($admin2))->toBeTrue();
-        expect($event->impersonation->user->is($admin4))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin4))->toBeTrue();
         expect($event->impersonation->level)->toBe(3);
 
         return true;
@@ -129,8 +129,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(1);
 
     Event::assertDispatched(function (ImpersonationFinished $event) use ($admin1, $admin2) {
-        expect($event->impersonation->admin->is($admin1))->toBeTrue();
-        expect($event->impersonation->user->is($admin2))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin1))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin2))->toBeTrue();
         expect($event->impersonation->level)->toBe(2);
 
         return true;
@@ -143,8 +143,8 @@ test('ImpersonationManager can impersonate another user until limit reached', fu
     expect($manager->level())->toBe(0);
 
     Event::assertDispatched(function (ImpersonationFinished $event) use ($admin0, $admin1) {
-        expect($event->impersonation->admin->is($admin0))->toBeTrue();
-        expect($event->impersonation->user->is($admin1))->toBeTrue();
+        expect($event->impersonation->impersonator->is($admin0))->toBeTrue();
+        expect($event->impersonation->impersonatee->is($admin1))->toBeTrue();
         expect($event->impersonation->level)->toBe(1);
 
         return true;

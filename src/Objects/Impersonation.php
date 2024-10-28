@@ -11,8 +11,8 @@ class Impersonation
     use SerializesModels;
 
     public function __construct(
-        public readonly Impersonateable $admin,
-        public readonly Impersonateable $user,
+        public readonly Impersonateable $impersonator,
+        public readonly Impersonateable $impersonatee,
         public readonly CarbonImmutable $timestamp,
         public readonly int $level,
     ) {
