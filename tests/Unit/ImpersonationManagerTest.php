@@ -3,6 +3,8 @@
 use BradieTilley\Impersonation\Events\ImpersonationFinished;
 use BradieTilley\Impersonation\Events\ImpersonationStarted;
 use BradieTilley\Impersonation\Exceptions\CannotImpersonateUserException;
+use BradieTilley\Impersonation\Exceptions\ImpersonationUnauthenticatedException;
+use BradieTilley\Impersonation\Exceptions\MissingImpersonationConfigurationException;
 use BradieTilley\Impersonation\ImpersonationConfig;
 use BradieTilley\Impersonation\ImpersonationManager;
 use BradieTilley\Impersonation\Objects\Impersonation;
@@ -215,4 +217,31 @@ test('impersonation manager can stop impersonating through multiple levels', fun
 
     $manager->stopAllImpersonating();
     expect($manager->isImpersonating())->toBe(false);
+});
+
+test('guest users cannot impersonate', function () {
+    $manager = ImpersonationManager::make();
+    ImpersonationManager::configure(
+        fn () => true,
+    );
+
+    $user = create_a_user();
+
+    expect(fn () => $manager->impersonate($user))->toThrow(
+        ImpersonationUnauthenticatedException::class,
+    );
+});
+
+test('you must configure the impersonation manager before you can impersonate', function () {
+    app()->forgetInstance(ImpersonationManager::class);
+    $manager = ImpersonationManager::make();
+
+    $user1 = create_a_user();
+    $user2 = create_a_user();
+
+    $this->actingAs($user1);
+
+    expect(fn () => $manager->impersonate($user2))->toThrow(
+        MissingImpersonationConfigurationException::class,
+    );
 });

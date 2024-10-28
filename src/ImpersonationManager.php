@@ -21,11 +21,11 @@ class ImpersonationManager
 {
     public const SESSION_KEY = 'impersonation_data';
 
-    /** @var null|(Closure(Impersonateable, Impersonateable): bool) Callback to handle authorization logic */
-    protected ?Closure $authorize = null;
+    /** @var (Closure(Impersonateable, Impersonateable): bool) Callback to handle authorization logic */
+    protected Closure $authorize;
 
-    /** @var (Closure(): (Impersonateable|null)) Callback to resolve the current authorised user at any given point */
-    protected Closure $user;
+    /** @var null|(Closure(): (Impersonateable|null)) Callback to resolve the current authorised user at any given point */
+    protected ?Closure $user = null;
 
     /** @var (Closure(Impersonateable): void) Callback to handle to the login logic */
     protected Closure $login;
@@ -61,6 +61,10 @@ class ImpersonationManager
      */
     public function user(): Impersonateable
     {
+        if ($this->user === null) {
+            throw ImpersonationException::missingConfiguration();
+        }
+
         $user = ($this->user)();
 
         if ($user === null) {
@@ -108,10 +112,6 @@ class ImpersonationManager
 
         if ($this->level() >= ImpersonationConfig::maxDepth()) {
             return false;
-        }
-
-        if ($this->authorize === null) {
-            throw ImpersonationException::missingConfiguration();
         }
 
         return ($this->authorize)($impersonator, $impersonatee) === true;
