@@ -2,12 +2,15 @@
 
 namespace BradieTilley\Impersonation\Exceptions;
 
-use Illuminate\Validation\UnauthorizedException;
+use BradieTilley\Impersonation\Contracts\Impersonateable;
 
-class CannotImpersonateUserException extends UnauthorizedException
+class CannotImpersonateUserException extends ImpersonationException
 {
-    public static function make(): self
-    {
-        return new self('User cannot impersonate this user');
+    public function __construct(
+        public readonly Impersonateable $impersonator,
+        public readonly Impersonateable $impersonatee,
+        string $message,
+    ) {
+        parent::__construct($message);
     }
 }

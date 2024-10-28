@@ -5,8 +5,7 @@ namespace BradieTilley\Impersonation;
 use BradieTilley\Impersonation\Contracts\Impersonateable;
 use BradieTilley\Impersonation\Events\ImpersonationFinished;
 use BradieTilley\Impersonation\Events\ImpersonationStarted;
-use BradieTilley\Impersonation\Exceptions\CannotImpersonateUserException;
-use BradieTilley\Impersonation\Exceptions\MissingAuthorizationCallbackException;
+use BradieTilley\Impersonation\Exceptions\ImpersonationException;
 use BradieTilley\Impersonation\Http\Requests\ImpersonationStartRequest;
 use BradieTilley\Impersonation\Http\Requests\ImpersonationStopRequest;
 use BradieTilley\Impersonation\Objects\Impersonation;
@@ -22,16 +21,16 @@ class ImpersonationManager
 {
     public const SESSION_KEY = 'impersonation_data';
 
-    /** @var (Closure(Model&Impersonateable, Model&Impersonateable): bool) Callback to handle authorization logic */
-    protected Closure $authorize;
+    /** @var null|(Closure(Impersonateable, Impersonateable): bool) Callback to handle authorization logic */
+    protected ?Closure $authorize = null;
 
-    /** @var (Closure(): (Model&Impersonateable)) Callback to resolve the current authorised user at any given point */
+    /** @var (Closure(): (Impersonateable|null)) Callback to resolve the current authorised user at any given point */
     protected Closure $user;
 
-    /** @var (Closure(Model&Impersonateable): void) Callback to handle to the login logic */
+    /** @var (Closure(Impersonateable): void) Callback to handle to the login logic */
     protected Closure $login;
 
-    /** @var (Closure(string): (Model&Impersonateable)) Callback to handle the resolving of the impersonatee given the ID of the impersonatee */
+    /** @var (Closure(string): (Impersonateable)) Callback to handle the resolving of the impersonatee given the ID of the impersonatee */
     protected Closure $resolveImpersonatee;
 
     /** @var (Closure(ImpersonationStartRequest, ImpersonationManager): Response) Callback to create the HTTP Response after starting impersonation */
@@ -60,11 +59,13 @@ class ImpersonationManager
     /**
      * Get the authorised user.
      */
-    public function user(): Model&Impersonateable
+    public function user(): Impersonateable
     {
-        $this->user ??= fn () => Auth::user();
-
         $user = ($this->user)();
+
+        if ($user === null) {
+            throw ImpersonationException::unauthenticated();
+        }
 
         return $user;
     }
@@ -72,7 +73,7 @@ class ImpersonationManager
     /**
      * Login as the given user.
      */
-    protected function loginAs(Model&Impersonateable $user): static
+    protected function loginAs(Impersonateable $user): static
     {
         ($this->login)($user);
 
@@ -91,7 +92,7 @@ class ImpersonationManager
     /**
      * Check if the given impersonator can impersonate the impersonatee
      */
-    public function canImpersonate(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool
+    public function canImpersonate(Impersonateable $impersonator, Impersonateable $impersonatee): bool
     {
         if ($impersonator->is($impersonatee)) {
             return false;
@@ -102,18 +103,18 @@ class ImpersonationManager
         }
 
         if ($this->authorize === null) {
-            throw MissingAuthorizationCallbackException::make();
+            throw ImpersonationException::missingConfiguration();
         }
 
         return ($this->authorize)($impersonator, $impersonatee) === true;
     }
 
-    public function impersonate(Model&Impersonateable $user): static
+    public function impersonate(Impersonateable $user): static
     {
         $admin = $this->user();
 
         if ($this->canImpersonate($admin, $user) === false) {
-            throw CannotImpersonateUserException::make();
+            throw ImpersonationException::cannotImpersonateUser($admin, $user);
         }
 
         $now = CarbonImmutable::now();
@@ -157,7 +158,7 @@ class ImpersonationManager
         return $this;
     }
 
-    public function resolveImpersonatee(string $impersonatee): Model&Impersonateable
+    public function resolveImpersonatee(string $impersonatee): Impersonateable
     {
         return ($this->resolveImpersonatee)($impersonatee);
     }
@@ -175,10 +176,10 @@ class ImpersonationManager
     /**
      * Configure the impersonation manager to work with the current project.
      *
-     * @param (Closure(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool) $authorize Callback to handle authorization logic
-     * @param (Closure(): (Model&Impersonateable))|null $user Callback to resolve the current authorised user at any given point
-     * @param (Closure(Model&Impersonateable $impersonatee): void)|null $login Callback to handle to the login logic
-     * @param (Closure(string $impersonatee): (Model&Impersonateable))|null $resolveImpersonatee Callback to handle the resolving of the impersonatee given the ID of the impersonatee
+     * @param (Closure(Impersonateable $impersonator, Impersonateable $impersonatee): bool) $authorize Callback to handle authorization logic
+     * @param (Closure(): (Impersonateable|null))|null $user Callback to resolve the current authorised user at any given point
+     * @param (Closure(Impersonateable $impersonatee): void)|null $login Callback to handle to the login logic
+     * @param (Closure(string $impersonatee): (Impersonateable))|null $resolveImpersonatee Callback to handle the resolving of the impersonatee given the ID of the impersonatee
      * @param (Closure(ImpersonationStartRequest $request): Response)|null $startResponse Callback to create the HTTP Response after starting impersonation
      * @param (Closure(ImpersonationStopRequest $request): Response)|null $stopResponse Callback to create the HTTP Response after stopping impersonation
      */
@@ -191,11 +192,22 @@ class ImpersonationManager
         Closure|null $stopResponse = null,
     ): void {
         $user ??= function () {
-            return Auth::user();
+            $user = Auth::user();
+
+            if (! $user instanceof Model) {
+                return null;
+            }
+
+            if (! $user instanceof Impersonateable) {
+                return null;
+            }
+
+            return $user;
         };
 
-        $login ??= function (User $user) {
-            return Auth::login($user, Auth::viaRemember());
+        $login ??= function (Impersonateable $user) {
+            /** @var User $user */
+            Auth::login($user, Auth::viaRemember());
         };
 
         $resolveImpersonatee ??= function (string $impersonatee) {
@@ -231,10 +243,10 @@ class ImpersonationManager
     }
 
     /**
-     * @param (Closure(Model&Impersonateable $impersonator, Model&Impersonateable $impersonatee): bool) $authorize Callback to handle authorization logic
-     * @param (Closure(): (Model&Impersonateable))|null $user Callback to resolve the current authorised user at any given point
-     * @param (Closure(Model&Impersonateable $impersonatee): void)|null $login Callback to handle to the login logic
-     * @param (Closure(string $impersonatee): (Model&Impersonateable))|null $resolveImpersonatee Callback to handle the resolving of the impersonatee given the ID of the impersonatee
+     * @param (Closure(Impersonateable $impersonator, Impersonateable $impersonatee): bool) $authorize Callback to handle authorization logic
+     * @param (Closure(): (Impersonateable|null))|null $user Callback to resolve the current authorised user at any given point
+     * @param (Closure(Impersonateable $impersonatee): void)|null $login Callback to handle to the login logic
+     * @param (Closure(string $impersonatee): (Impersonateable))|null $resolveImpersonatee Callback to handle the resolving of the impersonatee given the ID of the impersonatee
      * @param (Closure(ImpersonationStartRequest $request, ImpersonationManager $manager): Response)|null $startResponse Callback to create the HTTP Response after starting impersonation
      * @param (Closure(ImpersonationStopRequest $request, ImpersonationManager $manager): Response)|null $stopResponse Callback to create the HTTP Response after stopping impersonation
      */

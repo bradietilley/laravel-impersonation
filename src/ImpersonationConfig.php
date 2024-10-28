@@ -53,7 +53,7 @@ class ImpersonationConfig
      * primary key of the impersonatee. This model will be the model that the PK
      * is resolved against.
      *
-     * @return class-string<Model&Impersonateable>
+     * @return class-string<Impersonateable>
      */
     public static function getRoutingImpersonateeModel(): string
     {
