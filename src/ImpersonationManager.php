@@ -145,8 +145,17 @@ class ImpersonationManager
         return ! empty($this->impersonations);
     }
 
-    public function stopImpersonating(): static
+    public function stopAllImpersonating(): static
     {
+        return $this->stopImpersonating($this->level());
+    }
+
+    public function stopImpersonating(int $times = 1): static
+    {
+        if ($times <= 0) {
+            return $this;
+        }
+
         if (empty($this->impersonations)) {
             return $this;
         }
@@ -158,7 +167,7 @@ class ImpersonationManager
         $this->loginAs($impersonation->impersonator);
         $this->save();
 
-        return $this;
+        return $this->stopImpersonating(--$times);
     }
 
     protected function save(): static

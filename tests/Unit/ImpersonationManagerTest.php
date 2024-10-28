@@ -8,6 +8,7 @@ use BradieTilley\Impersonation\ImpersonationManager;
 use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Workbench\App\Models\User;
 
@@ -195,3 +196,23 @@ test('ImpersonationManager will not allow impersonating beyond max depth', funct
     4,
     5,
 ]);
+
+test('impersonation manager can stop impersonating through multiple levels', function () {
+    $manager = ImpersonationManager::make();
+    ImpersonationManager::configure(
+        fn () => true,
+    );
+    ImpersonationConfig::set('max_depth', 3);
+
+    $user1 = create_a_user();
+    $user2 = create_a_user();
+    $user3 = create_a_user();
+    $user4 = create_a_user();
+
+    Auth::login($user1);
+    $manager->impersonate($user2)->impersonate($user3)->impersonate($user4);
+    expect($manager->level())->toBe(3);
+
+    $manager->stopAllImpersonating();
+    expect($manager->isImpersonating())->toBe(false);
+});
