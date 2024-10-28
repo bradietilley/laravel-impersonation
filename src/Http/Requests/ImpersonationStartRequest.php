@@ -10,7 +10,7 @@ class ImpersonationStartRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return ImpersonationManager::make()->canImpersonate($this->user(), $this->impersonatee());
+        return ImpersonationManager::make()->canImpersonate($this->impersonator(), $this->impersonatee());
     }
 
     public function impersonatee(): Impersonateable
@@ -23,11 +23,8 @@ class ImpersonationStartRequest extends FormRequest
         return $impersonatee;
     }
 
-    public function user($guard = null): Impersonateable
+    public function impersonator(): Impersonateable
     {
-        /** @var Impersonateable $user */
-        $user = parent::user($guard);
-
-        return $user;
+        return ImpersonationManager::make()->user();
     }
 }

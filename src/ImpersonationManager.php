@@ -248,7 +248,7 @@ class ImpersonationManager
      *
      * By default this is a simple `Auth::user()` call
      */
-    public static function defaultUserHandler(): ?Impersonateable
+    protected static function defaultUserHandler(): ?Impersonateable
     {
         $user = Auth::user();
 
@@ -264,7 +264,7 @@ class ImpersonationManager
      *
      * By default this is a simple `Auth::login()` call
      */
-    public static function defaultLoginHandler(Impersonateable $user): void
+    protected static function defaultLoginHandler(Impersonateable $user): void
     {
         /** @var User $user */
         Auth::login($user, Auth::viaRemember());
@@ -275,7 +275,7 @@ class ImpersonationManager
      *
      * By default this is a simple `<ImpersonateeModel>::findOrFail()` call
      */
-    public static function defaultResolveImpersonateeHandler(string $impersonatee): Impersonateable
+    protected static function defaultResolveImpersonateeHandler(string $impersonatee): Impersonateable
     {
         $model = ImpersonationConfig::getRoutingImpersonateeModel();
 
@@ -287,7 +287,7 @@ class ImpersonationManager
      *
      * By default this is a simple JSON response or direct back.
      */
-    public static function defaultStartResponseHandler(ImpersonationStartRequest $request): Response
+    protected static function defaultStartResponseHandler(ImpersonationStartRequest $request): Response
     {
         return $request->expectsJson()
             ? response()->json([
@@ -301,7 +301,7 @@ class ImpersonationManager
      *
      * By default this is a simple JSON response or direct back.
      */
-    public static function defaultStopResponseHandler(ImpersonationStopRequest $request): Response
+    protected static function defaultStopResponseHandler(ImpersonationStopRequest $request): Response
     {
         return $request->expectsJson()
             ? response()->json([

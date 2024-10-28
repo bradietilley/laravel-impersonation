@@ -15,6 +15,11 @@ class ImpersonationConfig
         return static::$cache[$key] ??= config("impersonation.{$key}", $default);
     }
 
+    public static function set(string $key, mixed $value): void
+    {
+        static::$cache[$key] = $value;
+    }
+
     public static function clearCache(): void
     {
         static::$cache = [];
