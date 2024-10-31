@@ -335,10 +335,18 @@ class ImpersonationManager
      */
     protected static function defaultStopResponseHandler(ImpersonationStopRequest $request): Response
     {
-        return $request->expectsJson()
-            ? response()->json([
+        if ($request->expectsJson()) {
+            /** @var ResponseFactory $response */
+            $response = response();
+
+            return $response->json([
                 'success' => true,
-            ])
-            : redirect()->back();
+            ]);
+        }
+
+        /** @var Redirector $redirect */
+        $redirect = redirect();
+
+        return $redirect->back();
     }
 }
