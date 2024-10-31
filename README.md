@@ -25,6 +25,8 @@ The `BradieTilley\Impersonation\ImpersonationManager` singleton can be swapped o
 
 Usage of this is fairly straight-forward, it can be depedency injected or statically called.
 
+### Usage
+
 **Check if the authorised user can impersonate**
 
 ```php

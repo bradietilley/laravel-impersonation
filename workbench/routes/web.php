@@ -1,7 +1,7 @@
 <?php
 
 use BradieTilley\Impersonation\Http\Middleware\ForbiddenUnlessImpersonating;
-use BradieTilley\Impersonation\Http\Middleware\ForbiddenWhenImpersonating;
+use BradieTilley\Impersonation\Http\Middleware\ForbiddenWhileImpersonating;
 use BradieTilley\Impersonation\ImpersonationManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,5 +30,5 @@ Route::get('forbidden-when-impersonating', function () {
         'success' => true,
     ]);
 })->middleware([
-    ForbiddenWhenImpersonating::class,
+    ForbiddenWhileImpersonating::class,
 ]);
