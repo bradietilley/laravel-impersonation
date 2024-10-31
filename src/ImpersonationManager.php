@@ -12,8 +12,11 @@ use BradieTilley\Impersonation\Http\Requests\ImpersonationStopRequest;
 use BradieTilley\Impersonation\Objects\Impersonation;
 use Carbon\CarbonImmutable;
 use Closure;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Contracts\Session\Session;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -106,7 +109,8 @@ class ImpersonationManager
      */
     public function canImpersonate(Impersonateable $impersonator, Impersonateable $impersonatee): bool
     {
-        if ($impersonator->is($impersonatee)) {
+
+        if ($impersonator instanceof Model && $impersonatee instanceof Model && $impersonator->is($impersonatee)) {
             return false;
         }
 
@@ -309,11 +313,19 @@ class ImpersonationManager
      */
     protected static function defaultStartResponseHandler(ImpersonationStartRequest $request): Response
     {
-        return $request->expectsJson()
-            ? response()->json([
+        if ($request->expectsJson()) {
+            /** @var ResponseFactory $response */
+            $response = response();
+
+            return $response->json([
                 'success' => true,
-            ])
-            : redirect()->back();
+            ]);
+        }
+
+        /** @var Redirector $redirect */
+        $redirect = redirect();
+
+        return $redirect->back();
     }
 
     /**
